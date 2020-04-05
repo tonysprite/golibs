@@ -135,6 +135,9 @@ regex:
 goflag:
 	go run ./example/go-flag/cmd/main.go cmd1 -i -path abc
 
+cli:
+	go build -o cli ./example/cli/cmd/...; ./cli add -debug; rm ./cli
+	#go build -o cli ./main.go; ./cli nest other -debug; rm ./cli
 
 test:
 	#
