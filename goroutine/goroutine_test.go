@@ -3,27 +3,25 @@ package goroutine_test
 import (
 	"fmt"
 	"runtime"
+	"time"
 
 	. "github.com/hiromaily/golibs/goroutine"
+	tu "github.com/hiromaily/golibs/testutil"
 
 	//lg "github.com/hiromaily/golibs/log"
 	"os"
 	"sync"
 	"testing"
 
-	tu "github.com/hiromaily/golibs/testutil"
 	u "github.com/hiromaily/golibs/utils"
 )
 
 //-----------------------------------------------------------------------------
 // Test Framework
 //-----------------------------------------------------------------------------
-// Initialize
-func init() {
-	tu.InitializeTest("[GOROUTINE]")
-}
 
 func setup() {
+	tu.InitializeTest("[GOROUTINE]")
 }
 
 func teardown() {
@@ -112,4 +110,60 @@ func TestSemaphore2(t *testing.T) {
 
 	//cannot use data (type []map[string]int) as type []interface {} in argument to goroutine.Semaphore2
 	Semaphore2(something2, concurrencyCnt, u.SliceMapToInterface(data), wg)
+}
+
+//select block until data coming
+func TestSelect(t *testing.T) {
+	start := time.Now()
+	c := make(chan interface{})
+	go func() {
+		time.Sleep(5 * time.Second)
+		close(c)
+	}()
+
+	fmt.Printf("Blocking on read...")
+	select {
+	case <-c:
+		fmt.Printf("Unblocked %v later.\n", time.Since(start))
+	}
+}
+
+func TestSelect2(t *testing.T) {
+	c1 := make(chan interface{})
+	c2 := make(chan interface{})
+
+	var c1Count, c2Count int
+	go func() {
+		for {
+			select {
+			case <-c1:
+				c1Count++
+			case <-c2:
+				c2Count++
+			}
+			fmt.Println("is this code running?? Not!")
+		}
+	}()
+	time.Sleep(3 * time.Second)
+	fmt.Printf("c1Count: %d\nc2Count: %d\n", c1Count, c2Count)
+}
+
+//after closing channel, select doesn't block
+func TestSelect3(t *testing.T) {
+	c1 := make(chan interface{})
+	close(c1)
+	c2 := make(chan interface{})
+
+	var c1Count, c2Count int
+	//after closing channel, select doesn't block
+	for i := 1000; i >= 0; i-- {
+		select {
+		case <-c1:
+			c1Count++
+		case <-c2:
+			c2Count++
+		}
+	}
+	fmt.Printf("c1Count: %d\nc2Count: %d\n", c1Count, c2Count)
+
 }

@@ -15,9 +15,21 @@ LOG_ARG='-v'
 #    LOG_ARG=''
 #fi
 
+modVer=$(shell cat go.mod | head -n 3 | tail -n 1 | awk '{print $2}' | cut -d'.' -f2)
+currentVer=$(shell go version | awk '{print $3}' | sed -e "s/go//" | cut -d'.' -f2)
+
 ###############################################################################
 # Managing Dependencies
 ###############################################################################
+.PHONY: check-ver
+check-ver:
+	#echo $(modVer)
+	#echo $(currentVer)
+	@if [ ${currentVer} -lt ${modVer} ]; then\
+		echo go version ${modVer}++ is required but your go version is ${currentVer};\
+	fi
+
+
 GOLINT = $(GOPATH)/bin/golangci-lint
 
 $(GOLINT):
